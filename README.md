@@ -22,3 +22,10 @@ Details of each of the part explained above:
 6. Add data to one of the node and stablize that data that is make sure it is get transfered to in ordered fashion to rest of the machine.
 7. Crash the node though which data was added and make sure one is still able to access that data
 8. Write a report with details of all the implementation and graphs and simulation results.
+
+
+Github Reference Repo
+https://github.com/cbocovic/chord
+
+#Not implemented yet
+
