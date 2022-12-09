@@ -24,6 +24,15 @@ Details of each of the part explained above:
 8. Write a report with details of all the implementation and graphs and simulation results.
 
 
+Each processor will be of the type chordNode which will have a finger table, predecessor and successor and currPointer field.
+
+All three of the predecessor, successor and currPointer will be of type node, which is basically the abstract for a different process, it will be having an ip address and port to contact it
+
+Finger table will be having enties of type node
+
+Pre
+
+
 Github Reference Repo
 https://github.com/cbocovic/chord
 

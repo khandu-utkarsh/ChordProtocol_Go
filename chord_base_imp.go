@@ -1,89 +1,117 @@
 package chord
 
-import (
-	"fmt"
-)
-
 // Constants
 const m = 6
 
-//!Code has to be something like
-// Every process will be a node and will have a finger table
+type HashId struct {
+	id []byte
+}
 
-//SHA 1 Algorithm is only returning the const BLOCK_SIZE hash, check if there is a way to change the BLOCK_SIZE to m
+type Key struct {
+	hash_val HashId
+}
 
-type FingerTableEntry struct {
+// ! Each process on the system will be identified by type Node -  abstraction over Id and port number and hashId for that process
+type Node struct {
+	node_id          HashId
 	node_ip_address  string
 	node_port_number string
 }
 
 // Finger type denoting identifying information about a ChordNode
 type FingerTable struct {
-	table [m]FingerTableEntry //m entities
+	table [m]Node //m entities
+	next  int
+
+	//!In paper all the indexing for the entries in the table have been starting from 1, and in go indexing starts from 0, so whatever operations we are doing, simply
+	// add 1 else it is a tedious process to change paper's pseudo code
+
+	//Hence following should be true
+	//table[0] Succeeds curr Node id by atleast 2^(0 + 1 -1) or curr_node_id + 2^(0 + 1 -1)
+	//table[1] Succeeds curr Node id by atleast 2^(1 + 1 -1) or curr_node_id + 2^(1 + 1 -1)
+	//table[2] Succeeds curr Node id by atleast 2^(2 + 1 -1) or curr_node_id + 2^(2 + 1 -1)
+	//table[3] Succeeds curr Node id by atleast 2^(3 + 1 -1) or curr_node_id + 2^(3 + 1 -1)
+	//table[4] Succeeds curr Node id by atleast 2^(4 + 1 -1) or curr_node_id + 2^(4 + 1 -1)
+	//.
+	//.
+	//.
+	//table[m -1 ] Succeeds curr Node id by atleast 2^(m-1 + 1 -1) or curr_node_id + 2^(5 + 1 -1)
 }
 
-type Node struct {
-	node_hash_id [m]byte
-	successor * Node
-	predecessor * Node
+//!Every machine (processor) will be of type ChordNode
+//!It can be imagined as on the system each node will identity as ChordNode
+//!So when a processor joins the node ring or even creates a new ring, a ChordNode object for that will be returned
+
+// !Cord Node will be basically current node (current process)
+type ChordNode struct {
+	fingerTable FingerTable
+	self_node   Node
+
+	successor   Node //Assign this to the pointer to the first node of the table
+	predecessor Node
 }
 
-// Implement the comparison function
-func IsIdBetweenRange_RightEnd_Inclusive(key []byte, min []byte, max []byte) bool {
-}
-
-func IsIdBetweenRange_RightEnd_Exclusive(key []byte, min []byte, max []byte) bool {
-
-}
-
-func closest_preceding_node(key_hash_id []byte) []byte []
-	
-
-
-func (node Node) closest_preceding_node(key_hash_id []byte) Node {
-	for i := m; i >= 1; i-- {
-
-		node_at_index_i_id := node.fingerTable.table[i].associated_node_hash_id
-		if node_at_index_i_id > node.node_hash_id && node_at_index_i_id < key_hash_id {
-			return *node.associated_node
+func (cn ChordNode) closest_preceding_node(key Key) Node {
+	for i := m - 1; i >= 0; i-- {
+		if Is_X_BetweenRange_REExclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key.hash_val) {
+			return cn.fingerTable.table[i]
 		}
 	}
-	return node
+	return cn.node_id
 }
 
+func (ch ChordNode) find_predecessor(key Key) Node {
+	n_prime := ch.self_node
+	n_prime_succ := n_prime.RPC_get_successor_node()
 
+	for Is_X_BetweenRange_REInclusive(key.hash_val, n_prime.node_id, n_prime_succ.node_id) == false {
+		n_prime = n_prime.RPC_closest_preceeding_node()
+	}
+	return n_prime
+}
 
-// Functions from Image 5 from the paper read in Notability app
-func (node Node) find_successor(key_hash_id []byte) Node {
-	if IsIdBetweenRange(key_hash_id, node.node_hash_id, node.successor.node_hash_id) {
-		return *node.successor
+func (cn ChordNode) find_successor(key Key) Node {
+	if Is_X_BetweenRange_REInclusive(key.hash_val, n_prime.node_id, cn.successor.node_id) {
+		return cn.successor
 	} else {
-		n_prime = node.closest_preceding_node(key_hash_id)
-		//!Now a message should be sent to n_prime node to invoke find_successor operation
-		//!Therefore below function would be bringing results from different process  
-		return n_prime.find_successor(key_hash_id) //This function should be basically be searching for other machine node
+		n_prime = cn.closest_preceding_node(key)
+		return n_prime.RPC_get_successor_node()
 	}
 }
 
+//!Following three functions are called periodically
+//	1. stabilize
+//	2. fix_fingers
+//	3. check_predecessor
 
-// Functions from the Image 6 from the paper read in Notability app
-func (node Node) create() {
-	node.predecessor = nil
-	node.successor = &node
+func (ch ChordNode) stabilize() {
+	succ_pre_node := ch.successor.RPC_GetPredecessor()
+	if Is_X_BetweenRange_REExclusive(succ_pre_node.node_id, cn.self_node.node_id, cn.successor.node_id) {
+		ch.successor = succ_pre_node //!Changing it successor
+	}
+	//!Notifying it's successor about it
+	ch.successor.RPC_notify(ch.self_node) //!This will be a RPC Call
 }
 
-func (node Node) join(node_prime Node) {
-	node.predecessor = nil
-	returnedNode := node_prime.find_successor(node.node_hash_id)
-	node.successor = &returnedNode
+func (ch ChordNode) notify(n_prime Node) {
+	if ch.predecessor == nil || Is_X_BetweenRange_REExclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
+		ch.predecessor = n_prime
+	}
 }
 
-
-func (node Node) stablize() {
-	x := node.successor.predecessor
-	if x
+// Fix fingers also runs periodically
+func (ch ChordNode) fix_fingers() {
+	//Generate an random number between 0 to m-1 (We have m entries in the table)
+	if ch.fingerTable.next > m-1 {
+		ch.fingerTable.next = 0
+	}
+	key := Key
+	key.hash_val = ch.self_node.node_id + pow(2, ch.fingerTable.next+1-1)
+	ch.fingerTable.table[ch.fingerTable.next] = ch.find_successor(key)
 }
 
-func main() {
-	fmt.Println("Hello, world.")
+func (ch ChordNode) check_predecessor() {
+	if ch.predecessor.RPC_HasFailed() == true {
+		ch.predecessor = nil
+	}
 }
