@@ -1,3 +1,3 @@
-module github.com/khandu-utkarsh/ChordProtocol_Go
+module ChordProtocol_Go
 
 go 1.19
