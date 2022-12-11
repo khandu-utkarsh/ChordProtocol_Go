@@ -1,15 +1,17 @@
 package chord
 
+import (
+	"crypto/sha1"
+	"time"
+)
+
 // Constants
-const m = 6
+// !We need m bit identifier, SHA1 returns 20 * 8 bits = 160 bits
+const m = int(sha1.Size * 8)
 
-type HashId struct {
-	id []byte
-}
-
-type Key struct {
-	hash_val HashId
-}
+// type Key struct {
+// 	key_id HashId
+// }
 
 // ! Each process on the system will be identified by type Node -  abstraction over Id and port number and hashId for that process
 type Node struct {
@@ -20,22 +22,8 @@ type Node struct {
 
 // Finger type denoting identifying information about a ChordNode
 type FingerTable struct {
-	table [m]Node //m entities
+	table [m]Node //m entities =  159 entries and successor will directly be stored
 	next  int
-
-	//!In paper all the indexing for the entries in the table have been starting from 1, and in go indexing starts from 0, so whatever operations we are doing, simply
-	// add 1 else it is a tedious process to change paper's pseudo code
-
-	//Hence following should be true
-	//table[0] Succeeds curr Node id by atleast 2^(0 + 1 -1) or curr_node_id + 2^(0 + 1 -1)
-	//table[1] Succeeds curr Node id by atleast 2^(1 + 1 -1) or curr_node_id + 2^(1 + 1 -1)
-	//table[2] Succeeds curr Node id by atleast 2^(2 + 1 -1) or curr_node_id + 2^(2 + 1 -1)
-	//table[3] Succeeds curr Node id by atleast 2^(3 + 1 -1) or curr_node_id + 2^(3 + 1 -1)
-	//table[4] Succeeds curr Node id by atleast 2^(4 + 1 -1) or curr_node_id + 2^(4 + 1 -1)
-	//.
-	//.
-	//.
-	//table[m -1 ] Succeeds curr Node id by atleast 2^(m-1 + 1 -1) or curr_node_id + 2^(5 + 1 -1)
 }
 
 //!Every machine (processor) will be of type ChordNode
@@ -47,36 +35,49 @@ type ChordNode struct {
 	fingerTable FingerTable
 	self_node   Node
 
-	successor   Node //Assign this to the pointer to the first node of the table
-	predecessor Node
+	successor Node //!Should always be pointer to the first element of the finger table
+
+	//!If status is false, mean predecessor is some garbage value so consider it nil according to paper
+	predecessorStatus bool //If status is false,
+	predecessor       Node
 }
 
-func (cn ChordNode) closest_preceding_node(key Key) Node {
+func (cn ChordNode) UpdateSuccessor(node Node) {
+	cn.successor = node
+	cn.fingerTable.table[0] = node
+}
+
+func (ch ChordNode) lookup(key HashId) Node {
+	successorFound := ch.find_successor(key)
+	return successorFound
+}
+
+func InitializeFingerTable(node Node) FingerTable {
+	var ftable FingerTable
+	ftable.next = 1
+
+	for i := 0; i < m; i++ {
+		ftable.table[i] = node
+	}
+	return ftable
+}
+
+func (cn ChordNode) closest_preceding_node(key HashId) Node {
 	for i := m - 1; i >= 0; i-- {
-		if Is_X_BetweenRange_REExclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key.hash_val) {
+		if IsIdBetweenRange_RightEnd_Exclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key) {
 			return cn.fingerTable.table[i]
 		}
 	}
-	return cn.node_id
+	return cn.self_node
 }
 
-func (ch ChordNode) find_predecessor(key Key) Node {
-	n_prime := ch.self_node
-	n_prime_succ := n_prime.RPC_get_successor_node()
-
-	for Is_X_BetweenRange_REInclusive(key.hash_val, n_prime.node_id, n_prime_succ.node_id) == false {
-		n_prime = n_prime.RPC_closest_preceeding_node()
-	}
-	return n_prime
-}
-
-func (cn ChordNode) find_successor(key Key) Node {
-	if Is_X_BetweenRange_REInclusive(key.hash_val, n_prime.node_id, cn.successor.node_id) {
+func (cn ChordNode) find_successor(key HashId) Node {
+	if IsIdBetweenRange_RightEnd_Inclusive(key, cn.self_node.node_id, cn.successor.node_id) {
 		return cn.successor
-	} else {
-		n_prime = cn.closest_preceding_node(key)
-		return n_prime.RPC_get_successor_node()
 	}
+	//!This is the else condition, since if above if is true, this won't be executed
+	n_prime := cn.closest_preceding_node(key)
+	return n_prime.RPC_find_successor(key)
 }
 
 //!Following three functions are called periodically
@@ -84,34 +85,65 @@ func (cn ChordNode) find_successor(key Key) Node {
 //	2. fix_fingers
 //	3. check_predecessor
 
-func (ch ChordNode) stabilize() {
-	succ_pre_node := ch.successor.RPC_GetPredecessor()
-	if Is_X_BetweenRange_REExclusive(succ_pre_node.node_id, cn.self_node.node_id, cn.successor.node_id) {
-		ch.successor = succ_pre_node //!Changing it successor
+func (cn ChordNode) stabilize() {
+
+	predecessorOfSuccessor := cn.successor.RPC_find_predecessor()
+
+	if IsIdBetweenRange_RightEnd_Exclusive(predecessorOfSuccessor.node_id, cn.self_node.node_id, cn.successor.node_id) {
+		cn.UpdateSuccessor(predecessorOfSuccessor)
 	}
 	//!Notifying it's successor about it
-	ch.successor.RPC_notify(ch.self_node) //!This will be a RPC Call
+	cn.successor.RPC_notify(cn.self_node) //!This will be a RPC Call
 }
 
 func (ch ChordNode) notify(n_prime Node) {
-	if ch.predecessor == nil || Is_X_BetweenRange_REExclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
+	if ch.predecessorStatus == false || IsIdBetweenRange_RightEnd_Exclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
 		ch.predecessor = n_prime
 	}
 }
 
-// Fix fingers also runs periodically
-func (ch ChordNode) fix_fingers() {
-	//Generate an random number between 0 to m-1 (We have m entries in the table)
-	if ch.fingerTable.next > m-1 {
-		ch.fingerTable.next = 0
+func (ch ChordNode) check_predecessor() {
+	isAlive := ch.self_node.RPC_IsAlive(ch.predecessor)
+	if isAlive == false { //!Mean node has failed
+		ch.predecessorStatus = false
 	}
-	key := Key
-	key.hash_val = ch.self_node.node_id + pow(2, ch.fingerTable.next+1-1)
-	ch.fingerTable.table[ch.fingerTable.next] = ch.find_successor(key)
 }
 
-func (ch ChordNode) check_predecessor() {
-	if ch.predecessor.RPC_HasFailed() == true {
-		ch.predecessor = nil
+func (cn ChordNode) fix_fingers() {
+
+	cn.fingerTable.next = cn.fingerTable.next + 1
+
+	if cn.fingerTable.next >= m {
+		cn.fingerTable.next = 0
+	}
+
+	//!Generate hash id for the number
+	var int_hash_id HashId //!Write a message to fetch this id
+	int_hash_id = GenerateHashIdForFingerIndex(cn.self_node.node_id, cn.fingerTable.next)
+
+	newSuccessorReturned := cn.find_successor(int_hash_id)
+	cn.fingerTable.table[cn.fingerTable.next] = newSuccessorReturned
+}
+
+//!Write a function which checks what timer has went off and then do as instructed
+
+// !This will be infinitely running
+func (ch ChordNode) perodicallyCheck() {
+	//!Create three timers for stablization, fix fingers and check_predecessor
+	stable_ticker := time.NewTicker(5 * time.Millisecond)
+	check_p_ticker := time.NewTicker(4 * time.Second)
+	fix_f_timer := time.NewTicker(3 * time.Second)
+
+	for {
+		select {
+		case <-stable_ticker.C:
+			ch.stabilize()
+
+		case <-check_p_ticker.C:
+			ch.check_predecessor()
+
+		case <-fix_f_timer.C:
+			ch.fix_fingers()
+		}
 	}
 }
