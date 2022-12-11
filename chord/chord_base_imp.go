@@ -20,6 +20,27 @@ type Node struct {
 	node_port_number string
 }
 
+func (node Node) Set_node_id(id HashId) {
+	node.node_id = id
+}
+
+func (node Node) Set_node_ip_address(ip string) {
+	node.node_ip_address = ip
+}
+
+func (node Node) Set_node_port_number(p string) {
+	node.node_port_number = p
+}
+
+func (node Node) Get_node_ip_address() (string) {
+	return node.node_ip_address
+}
+
+func (node Node) Get_node_port_number() (string) {
+	return node.node_port_number
+}
+
+
 // Finger type denoting identifying information about a ChordNode
 type FingerTable struct {
 	table [m]Node //m entities =  159 entries and successor will directly be stored
@@ -47,7 +68,7 @@ func (cn ChordNode) UpdateSuccessor(node Node) {
 	cn.fingerTable.table[0] = node
 }
 
-func (ch ChordNode) lookup(key HashId) Node {
+func (ch ChordNode) Lookup(key HashId) Node {
 	successorFound := ch.find_successor(key)
 	return successorFound
 }
