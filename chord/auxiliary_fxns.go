@@ -3,6 +3,7 @@ package chord
 import (
 	"bytes"
 	"crypto/sha1"
+	"fmt"
 	"math/big"
 )
 
@@ -20,7 +21,7 @@ func Generate_Hash(inp []byte) HashId {
 	return hash
 }
 
-//!Change these before submitting
+// !Change these before submitting
 func GetCurrentProcessIPAddress() string {
 	return "AurojitPanda"
 }
@@ -28,8 +29,6 @@ func GetCurrentProcessIPAddress() string {
 func GetCurrentProcessPort() string {
 	return ":Sucks"
 }
-
-
 
 // Implement the comparison function
 func IsIdBetweenRange_RightEnd_Inclusive(key HashId, min HashId, max HashId) bool {
@@ -59,40 +58,79 @@ func IsIdBetweenRange_RightEnd_Exclusive(key HashId, min HashId, max HashId) boo
 	return false
 }
 
+// %Printing functions
+// Printing functions for big int
+func PrintBigInt(n big.Int) {
+	fmt.Printf("\n")
+	fmt.Printf("\n")
+	fmt.Println("Printing big.Int as decimal: ", n.Text(10))
+	fmt.Println("Printing big.Int as hex: ", n.Text(16))
+	fmt.Println("Printing big.Int as binary: ", n.Text(2))
+	fmt.Printf("\n")
 
-func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) (HashId) {
-	var ret_hash_id HashId
+}
 
-	//!Generate a big interger for n
+func PrintBytesSplices(b []byte) {
+	fmt.Printf("\n")
+	fmt.Printf("\n")
+	fmt.Printf("Printing []byte as hex: %x \n", b)
+	fmt.Printf("Printing []byte (each byte) as decimal: %v \n", b)
+	fmt.Printf("\n")
+}
+
+func GetBigIntFromBytes(b []byte) big.Int {
 	var n_big_int big.Int
-	n_big_int.SetBytes(n.id)
-	
-	//!Generate a big interget for 2 to power indexOfPower
-	var power_base_int big.Int
-	power_base_int.SetUint64(2)
+	n_big_int.SetBytes(b)
+	return n_big_int
+}
 
-	var power_exponent_int big.Int
-	power_exponent_int.SetUint64(uint64(indexOfPower))
+func GetBigIntFromIntegers(num int) big.Int {
+	var n_big_int big.Int
+	n_big_int.SetUint64(uint64(num))
+	return n_big_int
+}
 
+func Get_X_raised_to_power_Y(x *big.Int, y *big.Int) big.Int {
 	var power_out big.Int
-	power_out.Exp(&power_base_int, &power_exponent_int, nil)
+	power_out.Exp(x, y, nil)
+	return power_out
+}
 
-	var sum_out big.Int
-	sum_out.Add(&n_big_int, &power_out)
+func AddTwoBigInts(x *big.Int, y *big.Int) big.Int {
+	var sum big.Int
+	sum.Add(x, y)
+	return sum
+}
 
-	var power_exponent_m_int big.Int
-	power_exponent_m_int.SetUint64(uint64(m))
+// x%y
+func ModOperationTwoBigInts(x *big.Int, y *big.Int) big.Int {
+	var mod big.Int
+	mod.Mod(x, y)
+	return mod
+}
 
-	var two_power_m_int big.Int
-	two_power_m_int.Exp(&power_base_int, &power_exponent_m_int, nil)
+func Find_n_Plus_2_ToPower_k_WholeMod_2_ToPower_m(n *big.Int, k *big.Int, m *big.Int) big.Int {
+	x := GetBigIntFromIntegers(2)
 
-	var final_out big.Int
-	final_out.Mod(&sum_out, &two_power_m_int)
+	z := Get_X_raised_to_power_Y(&x, k)
+	s := AddTwoBigInts(n, &z)
 
+	denom := Get_X_raised_to_power_Y(&x, m)
+	out := ModOperationTwoBigInts(&s, &denom)
+	return out
+}
 
-	output :=make([]byte, m, m)
-	out := final_out.FillBytes(output)
+func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) HashId {
 
-	ret_hash_id.id = out
+	n_int := GetBigIntFromBytes(n.id)
+	k_int := GetBigIntFromIntegers(indexOfPower)
+	m_int := GetBigIntFromIntegers(m)
+
+	out_int := Find_n_Plus_2_ToPower_k_WholeMod_2_ToPower_m(&n_int, &k_int, &m_int)
+	output := make([]byte, spliceElementsCount, spliceElementsCount)
+	final_byte_splices := out_int.FillBytes(output)
+
+	var ret_hash_id HashId
+	ret_hash_id.id = final_byte_splices
 	return ret_hash_id
 }

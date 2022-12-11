@@ -7,6 +7,7 @@ import (
 
 // Constants
 // !We need m bit identifier, SHA1 returns 20 * 8 bits = 160 bits
+const spliceElementsCount = int(sha1.Size)
 const m = int(sha1.Size * 8)
 
 // type Key struct {
