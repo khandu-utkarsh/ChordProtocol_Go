@@ -27,7 +27,7 @@ func main() {
 
 	var keyToFind chord.HashId
 	nodeFound := processNode.Lookup(keyToFind)
-	fmt.Print("IP Adress: ", nodeFound.GetNodeIpAddress(), "\n")
+	fmt.Print("IP Address: ", nodeFound.GetNodeIpAddress(), "\n")
 	fmt.Print("Port Number: ", nodeFound.GetNodePortNumber(), "\n")
 
 	return
