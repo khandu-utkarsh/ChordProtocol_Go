@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ChordProtocol_Go/chord"
 	"fmt"
+	"github.com/khandu-utkarsh/ChordProtocol_Go/chord"
 )
 
 func main() {
