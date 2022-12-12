@@ -3,13 +3,13 @@ Project for NYU Distributed Systems Course. Fall 2022
 
 
 Whole implementation could be divided into following different parts
-1. Implement the  structs and function for base chord protocol without considering stablization and joining of new nodes.
-2. Mechanism to contact, send and fetch data from distributed nodes using google protocol buffer messaging system
+//1. Implement the  structs and function for base chord protocol without considering stablization and joining of new nodes.
+/2. Mechanism to contact, send and fetch data from distributed nodes using google protocol buffer messaging system
 3. Mechanism to test the implementation
-4. Functionality for join and removing of nodes
+//4. Functionality for join and removing of nodes
 5. Mechanism to test the node crashes and other things using simulation
 6. Implementation of addion of data to one of the machine
-7. Crashing the machine used for addition of the data and check if that data can still be fetched or not correctly
+//7. Crashing the machine used for addition of the data and check if that data can still be fetched or not correctly
 8. Report creation
 
 
@@ -38,3 +38,5 @@ https://github.com/cbocovic/chord
 
 #Not implemented yet
 
+
+Termil
