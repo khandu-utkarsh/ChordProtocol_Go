@@ -2,6 +2,7 @@ package chord
 
 import (
 	"crypto/sha1"
+	"math/big"
 	"time"
 )
 
@@ -33,14 +34,13 @@ func (node Node) Set_node_port_number(p string) {
 	node.node_port_number = p
 }
 
-func (node Node) Get_node_ip_address() (string) {
+func (node Node) Get_node_ip_address() string {
 	return node.node_ip_address
 }
 
-func (node Node) Get_node_port_number() (string) {
+func (node Node) Get_node_port_number() string {
 	return node.node_port_number
 }
-
 
 // Finger type denoting identifying information about a ChordNode
 type FingerTable struct {
@@ -62,6 +62,10 @@ type ChordNode struct {
 	//!If status is false, mean predecessor is some garbage value so consider it nil according to paper
 	predecessorStatus bool //If status is false,
 	predecessor       Node
+
+	//!Adding the key value pair data structure to store the keys
+	//!Since splices can be used, hence convert them to big.Int for storage
+	store map[big.Int]string
 }
 
 func (cn ChordNode) UpdateSuccessor(node Node) {
@@ -69,9 +73,51 @@ func (cn ChordNode) UpdateSuccessor(node Node) {
 	cn.fingerTable.table[0] = node
 }
 
+func (cn ChordNode) Query_AddKeyValueToStore(key HashId, value string) bool {
+	node := cn.Lookup(key) //!Successor found
+	additionStatus := node.RPC_AddKeyValueToStore(key, value)
+	return additionStatus
+}
+
+func (cn ChordNode) Query_IsKeyPresentInStore(key HashId) bool {
+	node := cn.Lookup(key) //!Successor found
+	presentStatus := node.RPC_IsKeyPresentInStore(key)
+	return presentStatus
+}
+
+func (cn ChordNode) Query_GetValueOfKeyInStore(key HashId) (string, bool) {
+	node := cn.Lookup(key) //!Successor found
+	value, status := node.RPC_GetValueOfKeyInStore(key)
+	return value, status
+}
+
+func (cn ChordNode) add_key_val_to_store(key HashId, value string) bool {
+	keyBigInt := GetBigIntFromBytes(key.id)
+	cn.store[keyBigInt] = value
+	return true
+}
+
+func (cn ChordNode) is_key_present_in_store(key HashId) bool {
+	keyBigInt := GetBigIntFromBytes(key.id)
+	_, ok := cn.store[keyBigInt]
+	return ok
+}
+
+func (cn ChordNode) get_value_of_key_in_store(key HashId) (string, bool) {
+	keyBigInt := GetBigIntFromBytes(key.id)
+	out, ok := cn.store[keyBigInt]
+	return out, ok
+}
+
 func (ch ChordNode) Lookup(key HashId) Node {
 	successorFound := ch.find_successor(key)
 	return successorFound
+}
+
+// !Write function to store key and return the ip address, just to check if it storing it correctly
+func InitializeStore() map[big.Int]string {
+	store := make(map[big.Int]string)
+	return store
 }
 
 func InitializeFingerTable(node Node) FingerTable {
@@ -86,6 +132,7 @@ func InitializeFingerTable(node Node) FingerTable {
 
 func (cn ChordNode) closest_preceding_node(key HashId) Node {
 	for i := m - 1; i >= 0; i-- {
+
 		if IsIdBetweenRange_RightEnd_Exclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key) {
 			return cn.fingerTable.table[i]
 		}

@@ -14,6 +14,10 @@ func (n Node) Create() ChordNode {
 
 	cn.successor = n
 	cn.fingerTable = InitializeFingerTable(n)
+
+	//!Initialize the store
+	cn.store = InitializeStore()
+
 	return cn
 }
 
@@ -27,5 +31,9 @@ func (n Node) Join(n_prime Node) ChordNode {
 
 	cn.successor = n_prime.RPC_find_successor(n.node_id)
 	cn.fingerTable = InitializeFingerTable(cn.successor)
+
+	//!Initialize the store
+	cn.store = InitializeStore()
+
 	return cn
 }
