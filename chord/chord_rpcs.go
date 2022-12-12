@@ -14,7 +14,7 @@ func (node Node) RPC_find_predecessor() Node {
 
 func (send_node Node) RPC_notify(receive_node Node) bool {
 
-	//!node should call notify on it with n_prime as argument
+	//!node should call notify on it with n_prime as argument, I'm the new successor
 	successs := true
 	return successs
 }

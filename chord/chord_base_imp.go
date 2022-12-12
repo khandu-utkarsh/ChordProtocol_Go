@@ -21,26 +21,25 @@ type Node struct {
 	node_port_number string
 }
 
-func (node Node) Set_node_id(id HashId) {
+func (node Node) SetNodeId(id HashId) {
 	node.node_id = id
 }
 
-func (node Node) Set_node_ip_address(ip string) {
+func (node Node) SetNodeIpAddress(ip string) {
 	node.node_ip_address = ip
 }
 
-func (node Node) Set_node_port_number(p string) {
+func (node Node) SetNodePortNumber(p string) {
 	node.node_port_number = p
 }
 
-func (node Node) Get_node_ip_address() (string) {
+func (node Node) GetNodeIpAddress() string {
 	return node.node_ip_address
 }
 
-func (node Node) Get_node_port_number() (string) {
+func (node Node) GetNodePortNumber() string {
 	return node.node_port_number
 }
-
 
 // Finger type denoting identifying information about a ChordNode
 type FingerTable struct {
@@ -70,35 +69,35 @@ func (cn ChordNode) UpdateSuccessor(node Node) {
 }
 
 func (ch ChordNode) Lookup(key HashId) Node {
-	successorFound := ch.find_successor(key)
+	successorFound := ch.findSuccessor(key)
 	return successorFound
 }
 
 func InitializeFingerTable(node Node) FingerTable {
-	var ftable FingerTable
-	ftable.next = 1
+	var fTable FingerTable
+	fTable.next = 1
 
 	for i := 0; i < m; i++ {
-		ftable.table[i] = node
+		fTable.table[i] = node
 	}
-	return ftable
+	return fTable
 }
 
-func (cn ChordNode) closest_preceding_node(key HashId) Node {
+func (cn ChordNode) closestPrecedingNode(key HashId) Node {
 	for i := m - 1; i >= 0; i-- {
-		if IsIdBetweenRange_RightEnd_Exclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key) {
+		if IsIdBetweenRangeRightEndExclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key) {
 			return cn.fingerTable.table[i]
 		}
 	}
 	return cn.self_node
 }
 
-func (cn ChordNode) find_successor(key HashId) Node {
+func (cn ChordNode) findSuccessor(key HashId) Node {
 	if IsIdBetweenRange_RightEnd_Inclusive(key, cn.self_node.node_id, cn.successor.node_id) {
 		return cn.successor
 	}
 	//!This is the else condition, since if above if is true, this won't be executed
-	n_prime := cn.closest_preceding_node(key)
+	n_prime := cn.closestPrecedingNode(key)
 	return n_prime.RPC_find_successor(key)
 }
 
@@ -111,7 +110,7 @@ func (cn ChordNode) stabilize() {
 
 	predecessorOfSuccessor := cn.successor.RPC_find_predecessor()
 
-	if IsIdBetweenRange_RightEnd_Exclusive(predecessorOfSuccessor.node_id, cn.self_node.node_id, cn.successor.node_id) {
+	if IsIdBetweenRangeRightEndExclusive(predecessorOfSuccessor.node_id, cn.self_node.node_id, cn.successor.node_id) {
 		cn.UpdateSuccessor(predecessorOfSuccessor)
 	}
 	//!Notifying it's successor about it
@@ -119,19 +118,19 @@ func (cn ChordNode) stabilize() {
 }
 
 func (ch ChordNode) notify(n_prime Node) {
-	if ch.predecessorStatus == false || IsIdBetweenRange_RightEnd_Exclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
+	if ch.predecessorStatus == false || IsIdBetweenRangeRightEndExclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
 		ch.predecessor = n_prime
 	}
 }
 
-func (ch ChordNode) check_predecessor() {
+func (ch ChordNode) checkPredecessor() {
 	isAlive := ch.self_node.RPC_IsAlive(ch.predecessor)
 	if isAlive == false { //!Mean node has failed
 		ch.predecessorStatus = false
 	}
 }
 
-func (cn ChordNode) fix_fingers() {
+func (cn ChordNode) fixFingers() {
 
 	cn.fingerTable.next = cn.fingerTable.next + 1
 
@@ -143,7 +142,7 @@ func (cn ChordNode) fix_fingers() {
 	var int_hash_id HashId //!Write a message to fetch this id
 	int_hash_id = GenerateHashIdForFingerIndex(cn.self_node.node_id, cn.fingerTable.next)
 
-	newSuccessorReturned := cn.find_successor(int_hash_id)
+	newSuccessorReturned := cn.findSuccessor(int_hash_id)
 	cn.fingerTable.table[cn.fingerTable.next] = newSuccessorReturned
 }
 
@@ -162,10 +161,10 @@ func (ch ChordNode) perodicallyCheck() {
 			ch.stabilize()
 
 		case <-check_p_ticker.C:
-			ch.check_predecessor()
+			ch.checkPredecessor()
 
 		case <-fix_f_timer.C:
-			ch.fix_fingers()
+			ch.fixFingers()
 		}
 	}
 }

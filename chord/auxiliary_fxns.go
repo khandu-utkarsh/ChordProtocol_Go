@@ -32,27 +32,27 @@ func GetCurrentProcessPort() string {
 
 // Implement the comparison function
 func IsIdBetweenRange_RightEnd_Inclusive(key HashId, min HashId, max HashId) bool {
-	key_hash := key.id
-	min_hash := min.id
-	max_hash := max.id
-	firstCond := bytes.Compare(min_hash, key_hash) < 0    // -> True if min < key
-	seocondCond := bytes.Compare(key_hash, max_hash) <= 0 // -> True if key <= max
+	keyHash := key.id
+	minHash := min.id
+	maxHash := max.id
+	firstCond := bytes.Compare(minHash, keyHash) < 0   // -> True if min < key
+	secondCond := bytes.Compare(keyHash, maxHash) <= 0 // -> True if key <= max
 
-	if firstCond && seocondCond {
+	if firstCond && secondCond {
 		return true
 	}
 	return false
 }
 
-func IsIdBetweenRange_RightEnd_Exclusive(key HashId, min HashId, max HashId) bool {
-	key_hash := key.id
-	min_hash := min.id
-	max_hash := max.id
+func IsIdBetweenRangeRightEndExclusive(key HashId, min HashId, max HashId) bool {
+	keyHash := key.id
+	minHash := min.id
+	maxHash := max.id
 
-	firstCond := bytes.Compare(min_hash, key_hash) < 0   // -> True if min < key
-	seocondCond := bytes.Compare(key_hash, max_hash) < 0 // -> True if key < max
+	firstCond := bytes.Compare(minHash, keyHash) < 0  // -> True if min < key
+	secondCond := bytes.Compare(keyHash, maxHash) < 0 // -> True if key < max
 
-	if firstCond && seocondCond {
+	if firstCond && secondCond {
 		return true
 	}
 	return false
@@ -90,7 +90,7 @@ func GetBigIntFromIntegers(num int) big.Int {
 	return n_big_int
 }
 
-func Get_X_raised_to_power_Y(x *big.Int, y *big.Int) big.Int {
+func GetXRaisedToPowerY(x *big.Int, y *big.Int) big.Int {
 	var power_out big.Int
 	power_out.Exp(x, y, nil)
 	return power_out
@@ -109,28 +109,28 @@ func ModOperationTwoBigInts(x *big.Int, y *big.Int) big.Int {
 	return mod
 }
 
-func Find_n_Plus_2_ToPower_k_WholeMod_2_ToPower_m(n *big.Int, k *big.Int, m *big.Int) big.Int {
+func FindNPlus2ToPowerKWholeMod2ToPowerM(n *big.Int, k *big.Int, m *big.Int) big.Int {
 	x := GetBigIntFromIntegers(2)
 
-	z := Get_X_raised_to_power_Y(&x, k)
+	z := GetXRaisedToPowerY(&x, k)
 	s := AddTwoBigInts(n, &z)
 
-	denom := Get_X_raised_to_power_Y(&x, m)
+	denom := GetXRaisedToPowerY(&x, m)
 	out := ModOperationTwoBigInts(&s, &denom)
 	return out
 }
 
 func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) HashId {
 
-	n_int := GetBigIntFromBytes(n.id)
-	k_int := GetBigIntFromIntegers(indexOfPower)
-	m_int := GetBigIntFromIntegers(m)
+	nInt := GetBigIntFromBytes(n.id)
+	kInt := GetBigIntFromIntegers(indexOfPower)
+	mInt := GetBigIntFromIntegers(m)
 
-	out_int := Find_n_Plus_2_ToPower_k_WholeMod_2_ToPower_m(&n_int, &k_int, &m_int)
+	outInt := FindNPlus2ToPowerKWholeMod2ToPowerM(&nInt, &kInt, &mInt)
 	output := make([]byte, spliceElementsCount, spliceElementsCount)
-	final_byte_splices := out_int.FillBytes(output)
+	finalByteSplices := outInt.FillBytes(output)
 
-	var ret_hash_id HashId
-	ret_hash_id.id = final_byte_splices
-	return ret_hash_id
+	var retHashId HashId
+	retHashId.id = finalByteSplices
+	return retHashId
 }

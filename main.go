@@ -9,26 +9,26 @@ func main() {
 
 	fmt.Print("Utkarsh's chord-go code\n")
 
-	curr_node_ip := chord.GetCurrentProcessIPAddress()
-	curr_node_port := chord.GetCurrentProcessPort()
+	currNodeIp := chord.GetCurrentProcessIPAddress()
+	currNodePort := chord.GetCurrentProcessPort()
 
-	stringToBeHashed := curr_node_ip + curr_node_port
+	stringToBeHashed := currNodeIp + currNodePort
 
-	var curr_ip_port_hash chord.HashId
-	curr_ip_port_hash = chord.Generate_Hash([]byte(stringToBeHashed))
+	var currIpPortHash chord.HashId
+	currIpPortHash = chord.Generate_Hash([]byte(stringToBeHashed))
 
 	//!Initializing node data
-	var curr_node chord.Node
-	curr_node.Set_node_id(curr_ip_port_hash)
-	curr_node.Set_node_ip_address(curr_node_ip)
-	curr_node.Set_node_port_number(curr_node_port)
+	var currNode chord.Node
+	currNode.SetNodeId(currIpPortHash)
+	currNode.SetNodeIpAddress(currNodeIp)
+	currNode.SetNodePortNumber(currNodePort)
 
-	processNode := curr_node.Create()
+	processNode := currNode.Create()
 
 	var keyToFind chord.HashId
 	nodeFound := processNode.Lookup(keyToFind)
-	fmt.Print("IP Adress: ", nodeFound.Get_node_ip_address(), "\n")
-	fmt.Print("Port Number: ", nodeFound.Get_node_port_number(), "\n")
+	fmt.Print("IP Adress: ", nodeFound.GetNodeIpAddress(), "\n")
+	fmt.Print("Port Number: ", nodeFound.GetNodePortNumber(), "\n")
 
 	return
 }
