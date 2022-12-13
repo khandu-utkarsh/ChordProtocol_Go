@@ -29,9 +29,9 @@ func (sendNode *Node) RpcFindSuccessor(id HashId) Node {
 	c := NewChordServiceClient(conn)
 	response, err := c.FindSuccessor(context.Background(), &NodeMessage{Id: GetHexBasedStringFromBytes(id.Id)})
 	if err != nil {
-		log.Fatalf("Error when calling SayHello: %s", err)
+		log.Fatalf("Error when calling FindSuccessor: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcFindSuccessor : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	node := Node{node_id: HashId{GetByteArrayFromString(response.Id)}, node_ip_address: response.IpAddress, node_port_number: response.Port}
 
@@ -47,7 +47,7 @@ func (sendNode *Node) RpcFindPredecessor() Node {
 	if err != nil {
 		log.Fatalf("Error when calling FindPredecessor: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcFindPredecessor : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	node := Node{node_id: HashId{GetByteArrayFromString(response.Id)}, node_ip_address: response.IpAddress, node_port_number: response.Port}
 
@@ -65,7 +65,7 @@ func (sendNode *Node) RpcNotify(receive_node Node) bool {
 	if err != nil {
 		log.Fatalf("Error when calling Notify: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcNotify : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	return response.Success
 }
@@ -79,9 +79,9 @@ func (sendNode *Node) RpcIsAlive(receive_node Node) bool {
 	c := NewChordServiceClient(conn)
 	response, err := c.Notify(context.Background(), &NodeMessage{})
 	if err != nil {
-		log.Fatalf("Error when calling IsAlive: %s", err)
+		return false
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcIsAlive : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	return response.Success
 }
@@ -95,7 +95,7 @@ func (sendNode *Node) RpcAddKeyValueToStore(key HashId, value string) bool {
 	if err != nil {
 		log.Fatalf("Error when calling AddKeyValueToStore: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcAddKeyValueToStore : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	return response.Success
 }
@@ -109,7 +109,7 @@ func (sendNode *Node) RpcIsKeyPresentInStore(key HashId) bool {
 	if err != nil {
 		log.Fatalf("Error when calling IsKeyPresentInStore: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcIsKeyPresentInStore : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	return response.Success
 }
@@ -123,7 +123,7 @@ func (sendNode *Node) RpcGetValueOfKeyInStore(key HashId) (string, bool) {
 	if err != nil {
 		log.Fatalf("Error when calling GetValueOfKeyInStore: %s", err)
 	}
-	log.Printf("Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
+	log.Printf("RpcGetValueOfKeyInStore : Response from server: %s %s %s %s %s", response.Id, response.Port, response.IpAddress, response.Path, response.Log)
 
 	return response.Value, response.Success
 }

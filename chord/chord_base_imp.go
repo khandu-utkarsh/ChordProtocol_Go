@@ -71,6 +71,12 @@ type ChordNode struct {
 	store map[string]string
 }
 
+func (cn *ChordNode) PrintFingerTable() {
+	for i := 0; i < m; i++ {
+		PrintBytesSplices(cn.fingerTable.table[i].node_id.Id)
+	}
+}
+
 func (cn *ChordNode) UpdateSuccessor(node Node) {
 	cn.successor = node
 	cn.fingerTable.table[0] = node
@@ -171,6 +177,9 @@ func (cn *ChordNode) findSuccessor(key HashId) Node {
 //	3. check_predecessor
 
 func (cn *ChordNode) stabilize() {
+	if IsSameNode(cn.SelfNode, cn.successor) {
+		return
+	}
 
 	predecessorOfSuccessor := cn.successor.RpcFindPredecessor()
 
@@ -188,9 +197,11 @@ func (ch *ChordNode) notify(n_prime Node) {
 }
 
 func (ch *ChordNode) checkPredecessor() {
-	isAlive := ch.SelfNode.RpcIsAlive(ch.predecessor)
-	if isAlive == false { //!Mean node has failed
-		ch.predecessorStatus = false
+	if !IsSameNode(ch.SelfNode, ch.predecessor) {
+		isAlive := ch.SelfNode.RpcIsAlive(ch.predecessor)
+		if isAlive == false { //!Mean node has failed
+			ch.predecessorStatus = false
+		}
 	}
 }
 
@@ -213,11 +224,11 @@ func (cn *ChordNode) fixFingers() {
 //!Write a function which checks what timer has went off and then do as instructed
 
 // !This will be infinitely running
-func (ch *ChordNode) perodicallyCheck() {
+func (ch *ChordNode) PerodicallyCheck() {
 	//!Create three timers for stablization, fix fingers and check_predecessor
-	stable_ticker := time.NewTicker(5 * time.Millisecond)
-	check_p_ticker := time.NewTicker(4 * time.Second)
-	fix_f_timer := time.NewTicker(3 * time.Second)
+	stable_ticker := time.NewTicker(10 * time.Second)
+	check_p_ticker := time.NewTicker(10 * time.Second)
+	fix_f_timer := time.NewTicker(100 * time.Millisecond)
 
 	for {
 		select {

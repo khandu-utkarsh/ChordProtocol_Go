@@ -72,11 +72,9 @@ func PrintBigInt(n big.Int) {
 }
 
 func PrintBytesSplices(b []byte) {
-	fmt.Printf("\n")
-	fmt.Printf("\n")
+	fmt.Println()
 	fmt.Printf("Printing []byte as hex: %x \n", b)
 	fmt.Printf("Printing []byte (each byte) as decimal: %v \n", b)
-	fmt.Printf("\n")
 }
 
 func GetHexBasedStringFromBytes(b []byte) string {
@@ -146,4 +144,8 @@ func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) HashId {
 	var retHashId HashId
 	retHashId.Id = finalByteSplices
 	return retHashId
+}
+
+func IsSameNode(node1 Node, node2 Node) bool {
+	return GetHexBasedStringFromBytes(node1.node_id.Id) == GetHexBasedStringFromBytes(node2.node_id.Id)
 }

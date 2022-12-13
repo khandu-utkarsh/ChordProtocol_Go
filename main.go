@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"time"
 )
 
 func checkIPAddress(ip string) {
@@ -86,8 +87,15 @@ func main() {
 	}()
 
 	// Stabilise
+	go func() {
+		processNode.PerodicallyCheck()
+	}()
 
 	// Open for consumer requests...
+	go func() {
+		time.Sleep(10 * time.Second)
+		processNode.PrintFingerTable()
+	}()
 
 	var keyToFind chord.HashId
 	keyToFind = chord.Generate_Hash([]byte("DistributedSystems"))
