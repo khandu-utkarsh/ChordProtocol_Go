@@ -24,3 +24,17 @@ func (send_node Node) RPC_IsAlive(receive_node Node) bool {
 	// if yes, return ture and if not return false
 	return false
 }
+
+func (send_node Node) RPC_AddKeyValueToStore(key HashId, value string) bool {
+	return false
+}
+
+func (send_node Node) RPC_IsKeyPresentInStore(key HashId) bool {
+	return false
+}
+
+func (send_node Node) RPC_GetValueOfKeyInStore(key HashId) (string, bool) {
+	var str string
+	var status bool
+	return str, status
+}
