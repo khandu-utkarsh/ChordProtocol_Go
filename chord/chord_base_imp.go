@@ -2,7 +2,6 @@ package chord
 
 import (
 	"crypto/sha1"
-	"math/big"
 	"time"
 )
 
@@ -65,7 +64,7 @@ type ChordNode struct {
 
 	//!Adding the key value pair data structure to store the keys
 	//!Since splices can be used, hence convert them to big.Int for storage
-	store map[big.Int]string
+	store map[string]string
 }
 
 func (cn ChordNode) UpdateSuccessor(node Node) {
@@ -92,20 +91,20 @@ func (cn ChordNode) Query_GetValueOfKeyInStore(key HashId) (string, bool) {
 }
 
 func (cn ChordNode) add_key_val_to_store(key HashId, value string) bool {
-	keyBigInt := GetBigIntFromBytes(key.id)
-	cn.store[keyBigInt] = value
+	hashStr := GetHexBasedStringFromBytes(key.id)
+	cn.store[hashStr] = value
 	return true
 }
 
 func (cn ChordNode) is_key_present_in_store(key HashId) bool {
-	keyBigInt := GetBigIntFromBytes(key.id)
-	_, ok := cn.store[keyBigInt]
+	hashStr := GetHexBasedStringFromBytes(key.id)
+	_, ok := cn.store[hashStr]
 	return ok
 }
 
 func (cn ChordNode) get_value_of_key_in_store(key HashId) (string, bool) {
-	keyBigInt := GetBigIntFromBytes(key.id)
-	out, ok := cn.store[keyBigInt]
+	hashStr := GetHexBasedStringFromBytes(key.id)
+	out, ok := cn.store[hashStr]
 	return out, ok
 }
 
@@ -115,8 +114,8 @@ func (ch ChordNode) Lookup(key HashId) Node {
 }
 
 // !Write function to store key and return the ip address, just to check if it storing it correctly
-func InitializeStore() map[big.Int]string {
-	store := make(map[big.Int]string)
+func InitializeStore() map[string]string {
+	store := make(map[string]string)
 	return store
 }
 
