@@ -17,7 +17,7 @@ func (n *Node) Create() ChordNode {
 	cn.successor = *n
 	cn.fingerTable = InitializeFingerTable(*n)
 
-	//!Initialize the store
+	//!Initialize the store --Temp
 	cn.store = InitializeStore()
 
 	return cn
