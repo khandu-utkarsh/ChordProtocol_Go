@@ -93,8 +93,9 @@ func main() {
 
 	// Open for consumer requests...
 	go func() {
-		time.Sleep(10 * time.Second)
-		processNode.PrintFingerTable()
+		time.Sleep(40 * time.Second)
+		successor := processNode.GetSuccessorNode()
+		fmt.Println("CURRENT PORT", *port, "SUCCESSOR NODE PORT: ", successor.GetNodePortNumber())
 	}()
 
 	var keyToFind chord.HashId

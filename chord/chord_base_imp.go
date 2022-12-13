@@ -77,6 +77,10 @@ func (cn *ChordNode) PrintFingerTable() {
 	}
 }
 
+func (cn *ChordNode) GetSuccessorNode() Node {
+	return cn.successor
+}
+
 func (cn *ChordNode) UpdateSuccessor(node Node) {
 	cn.successor = node
 	cn.fingerTable.table[0] = node
@@ -218,7 +222,11 @@ func (cn *ChordNode) fixFingers() {
 	int_hash_id = GenerateHashIdForFingerIndex(cn.SelfNode.node_id, cn.fingerTable.next)
 
 	newSuccessorReturned := cn.findSuccessor(int_hash_id)
-	cn.fingerTable.table[cn.fingerTable.next] = newSuccessorReturned
+	if cn.fingerTable.next == 0 {
+		cn.UpdateSuccessor(newSuccessorReturned)
+	} else {
+		cn.fingerTable.table[cn.fingerTable.next] = newSuccessorReturned
+	}
 }
 
 //!Write a function which checks what timer has went off and then do as instructed
