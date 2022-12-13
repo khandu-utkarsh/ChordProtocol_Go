@@ -3,6 +3,7 @@ package chord
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -76,6 +77,11 @@ func PrintBytesSplices(b []byte) {
 	fmt.Printf("Printing []byte as hex: %x \n", b)
 	fmt.Printf("Printing []byte (each byte) as decimal: %v \n", b)
 	fmt.Printf("\n")
+}
+
+func GetHexBasedStringFromBytes(b []byte) string {
+	convertedString := hex.EncodeToString(b)
+	return convertedString
 }
 
 func GetBigIntFromBytes(b []byte) big.Int {
