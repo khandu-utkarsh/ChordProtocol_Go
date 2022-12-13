@@ -21,23 +21,27 @@ type Node struct {
 	node_port_number string
 }
 
-func (node Node) SetNodeId(id HashId) {
+func (node *Node) SetNodeId(id HashId) {
 	node.node_id = id
 }
 
-func (node Node) SetNodeIpAddress(ip string) {
+func (node *Node) SetNodeIpAddress(ip string) {
 	node.node_ip_address = ip
 }
 
-func (node Node) SetNodePortNumber(p string) {
+func (node *Node) SetNodePortNumber(p string) {
 	node.node_port_number = p
 }
 
-func (node Node) GetNodeIpAddress() string {
+func (node *Node) GetNodeId() HashId {
+	return node.node_id
+}
+
+func (node *Node) GetNodeIpAddress() string {
 	return node.node_ip_address
 }
 
-func (node Node) GetNodePortNumber() string {
+func (node *Node) GetNodePortNumber() string {
 	return node.node_port_number
 }
 
@@ -54,7 +58,7 @@ type FingerTable struct {
 // !Cord Node will be basically current node (current process)
 type ChordNode struct {
 	fingerTable FingerTable
-	self_node   Node
+	SelfNode    Node
 
 	successor Node //!Should always be pointer to the first element of the finger table
 
@@ -67,48 +71,58 @@ type ChordNode struct {
 	store map[string]string
 }
 
-func (cn ChordNode) UpdateSuccessor(node Node) {
+func (cn *ChordNode) UpdateSuccessor(node Node) {
 	cn.successor = node
 	cn.fingerTable.table[0] = node
 }
 
-func (cn ChordNode) Query_AddKeyValueToStore(key HashId, value string) bool {
+func (cn *ChordNode) Query_AddKeyValueToStore(key HashId, value string) bool {
 	node := cn.Lookup(key) //!Successor found
-	additionStatus := node.RPC_AddKeyValueToStore(key, value)
+	if GetHexBasedStringFromBytes(node.GetNodeId().Id) == GetHexBasedStringFromBytes(cn.SelfNode.GetNodeId().Id) {
+		return cn.add_key_val_to_store(key, value)
+	}
+
+	additionStatus := node.RpcAddKeyValueToStore(key, value)
 	return additionStatus
 }
 
-func (cn ChordNode) Query_IsKeyPresentInStore(key HashId) bool {
+func (cn *ChordNode) Query_IsKeyPresentInStore(key HashId) bool {
 	node := cn.Lookup(key) //!Successor found
-	presentStatus := node.RPC_IsKeyPresentInStore(key)
+	if GetHexBasedStringFromBytes(node.GetNodeId().Id) == GetHexBasedStringFromBytes(cn.SelfNode.GetNodeId().Id) {
+		return cn.is_key_present_in_store(key)
+	}
+	presentStatus := node.RpcIsKeyPresentInStore(key)
 	return presentStatus
 }
 
-func (cn ChordNode) Query_GetValueOfKeyInStore(key HashId) (string, bool) {
+func (cn *ChordNode) Query_GetValueOfKeyInStore(key HashId) (string, bool) {
 	node := cn.Lookup(key) //!Successor found
-	value, status := node.RPC_GetValueOfKeyInStore(key)
+	if GetHexBasedStringFromBytes(node.GetNodeId().Id) == GetHexBasedStringFromBytes(cn.SelfNode.GetNodeId().Id) {
+		return cn.get_value_of_key_in_store(key)
+	}
+	value, status := node.RpcGetValueOfKeyInStore(key)
 	return value, status
 }
 
-func (cn ChordNode) add_key_val_to_store(key HashId, value string) bool {
-	hashStr := GetHexBasedStringFromBytes(key.id)
+func (cn *ChordNode) add_key_val_to_store(key HashId, value string) bool {
+	hashStr := GetHexBasedStringFromBytes(key.Id)
 	cn.store[hashStr] = value
 	return true
 }
 
-func (cn ChordNode) is_key_present_in_store(key HashId) bool {
-	hashStr := GetHexBasedStringFromBytes(key.id)
+func (cn *ChordNode) is_key_present_in_store(key HashId) bool {
+	hashStr := GetHexBasedStringFromBytes(key.Id)
 	_, ok := cn.store[hashStr]
 	return ok
 }
 
-func (cn ChordNode) get_value_of_key_in_store(key HashId) (string, bool) {
-	hashStr := GetHexBasedStringFromBytes(key.id)
+func (cn *ChordNode) get_value_of_key_in_store(key HashId) (string, bool) {
+	hashStr := GetHexBasedStringFromBytes(key.Id)
 	out, ok := cn.store[hashStr]
 	return out, ok
 }
 
-func (ch ChordNode) Lookup(key HashId) Node {
+func (ch *ChordNode) Lookup(key HashId) Node {
 	successorFound := ch.findSuccessor(key)
 	return successorFound
 }
@@ -129,22 +143,26 @@ func InitializeFingerTable(node Node) FingerTable {
 	return fTable
 }
 
-func (cn ChordNode) closestPrecedingNode(key HashId) Node {
+func (cn *ChordNode) closestPrecedingNode(key HashId) Node {
 	for i := m - 1; i >= 0; i-- {
-		if IsIdBetweenRangeRightEndExclusive(cn.fingerTable.table[i].node_id, cn.self_node.node_id, key) {
+		if IsIdBetweenRangeRightEndExclusive(cn.fingerTable.table[i].node_id, cn.SelfNode.node_id, key) {
 			return cn.fingerTable.table[i]
 		}
 	}
-	return cn.self_node
+	return cn.SelfNode
 }
 
-func (cn ChordNode) findSuccessor(key HashId) Node {
-	if IsIdBetweenRange_RightEnd_Inclusive(key, cn.self_node.node_id, cn.successor.node_id) {
+func (cn *ChordNode) findSuccessor(key HashId) Node {
+	if IsIdBetweenRange_RightEnd_Inclusive(key, cn.SelfNode.node_id, cn.successor.node_id) {
 		return cn.successor
 	}
 	//!This is the else condition, since if above if is true, this won't be executed
 	n_prime := cn.closestPrecedingNode(key)
-	return n_prime.RPC_find_successor(key)
+	if GetHexBasedStringFromBytes(n_prime.GetNodeId().Id) == GetHexBasedStringFromBytes(cn.SelfNode.GetNodeId().Id) {
+		return cn.SelfNode
+	}
+
+	return n_prime.RpcFindSuccessor(key)
 }
 
 //!Following three functions are called periodically
@@ -152,31 +170,31 @@ func (cn ChordNode) findSuccessor(key HashId) Node {
 //	2. fix_fingers
 //	3. check_predecessor
 
-func (cn ChordNode) stabilize() {
+func (cn *ChordNode) stabilize() {
 
-	predecessorOfSuccessor := cn.successor.RPC_find_predecessor()
+	predecessorOfSuccessor := cn.successor.RpcFindPredecessor()
 
-	if IsIdBetweenRangeRightEndExclusive(predecessorOfSuccessor.node_id, cn.self_node.node_id, cn.successor.node_id) {
+	if IsIdBetweenRangeRightEndExclusive(predecessorOfSuccessor.node_id, cn.SelfNode.node_id, cn.successor.node_id) {
 		cn.UpdateSuccessor(predecessorOfSuccessor)
 	}
 	//!Notifying it's successor about it
-	cn.successor.RPC_notify(cn.self_node) //!This will be a RPC Call
+	cn.successor.RpcNotify(cn.SelfNode) //!This will be a RPC Call
 }
 
-func (ch ChordNode) notify(n_prime Node) {
-	if ch.predecessorStatus == false || IsIdBetweenRangeRightEndExclusive(n_prime.node_id, ch.predecessor.node_id, ch.self_node.node_id) == true {
+func (ch *ChordNode) notify(n_prime Node) {
+	if ch.predecessorStatus == false || IsIdBetweenRangeRightEndExclusive(n_prime.node_id, ch.predecessor.node_id, ch.SelfNode.node_id) == true {
 		ch.predecessor = n_prime
 	}
 }
 
-func (ch ChordNode) checkPredecessor() {
-	isAlive := ch.self_node.RPC_IsAlive(ch.predecessor)
+func (ch *ChordNode) checkPredecessor() {
+	isAlive := ch.SelfNode.RpcIsAlive(ch.predecessor)
 	if isAlive == false { //!Mean node has failed
 		ch.predecessorStatus = false
 	}
 }
 
-func (cn ChordNode) fixFingers() {
+func (cn *ChordNode) fixFingers() {
 
 	cn.fingerTable.next = cn.fingerTable.next + 1
 
@@ -184,9 +202,9 @@ func (cn ChordNode) fixFingers() {
 		cn.fingerTable.next = 0
 	}
 
-	//!Generate hash id for the number
-	var int_hash_id HashId //!Write a message to fetch this id
-	int_hash_id = GenerateHashIdForFingerIndex(cn.self_node.node_id, cn.fingerTable.next)
+	//!Generate hash Id for the number
+	var int_hash_id HashId //!Write a message to fetch this Id
+	int_hash_id = GenerateHashIdForFingerIndex(cn.SelfNode.node_id, cn.fingerTable.next)
 
 	newSuccessorReturned := cn.findSuccessor(int_hash_id)
 	cn.fingerTable.table[cn.fingerTable.next] = newSuccessorReturned
@@ -195,7 +213,7 @@ func (cn ChordNode) fixFingers() {
 //!Write a function which checks what timer has went off and then do as instructed
 
 // !This will be infinitely running
-func (ch ChordNode) perodicallyCheck() {
+func (ch *ChordNode) perodicallyCheck() {
 	//!Create three timers for stablization, fix fingers and check_predecessor
 	stable_ticker := time.NewTicker(5 * time.Millisecond)
 	check_p_ticker := time.NewTicker(4 * time.Second)

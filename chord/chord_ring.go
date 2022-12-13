@@ -1,19 +1,21 @@
 package chord
 
+import "fmt"
+
 //import (
 //	"fmt"
 //)
 
-func (n Node) Create() ChordNode {
+func (n *Node) Create() ChordNode {
 
 	var cn ChordNode
-	cn.self_node = n
+	cn.SelfNode = *n
 
 	cn.predecessorStatus = false
-	cn.predecessor = n
+	cn.predecessor = *n
 
-	cn.successor = n
-	cn.fingerTable = InitializeFingerTable(n)
+	cn.successor = *n
+	cn.fingerTable = InitializeFingerTable(*n)
 
 	//!Initialize the store
 	cn.store = InitializeStore()
@@ -21,15 +23,16 @@ func (n Node) Create() ChordNode {
 	return cn
 }
 
-func (n Node) Join(n_prime Node) ChordNode {
+func (n *Node) Join(n_prime Node) ChordNode {
 
 	var cn ChordNode
-	cn.self_node = n
+	cn.SelfNode = *n
 
 	cn.predecessorStatus = false
-	cn.predecessor = n
+	cn.predecessor = *n
 
-	cn.successor = n_prime.RPC_find_successor(n.node_id)
+	cn.successor = n_prime.RpcFindSuccessor(n.node_id)
+	fmt.Println("SUCCESSOR: PORT: ", cn.successor.node_port_number)
 	cn.fingerTable = InitializeFingerTable(cn.successor)
 
 	//!Initialize the store

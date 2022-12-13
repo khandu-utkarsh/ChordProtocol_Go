@@ -1,0 +1,25 @@
+syntax = "proto3";
+package chord;
+
+option go_package="/chord";
+
+message NodeMessage {
+  string id = 1;
+  string ipAddress = 2;
+  string port = 3;
+  string path = 4;
+  string log = 5;
+  string key = 6;
+  string value = 7;
+  bool success = 8;
+}
+
+service ChordService {
+  rpc FindSuccessor(NodeMessage) returns (NodeMessage) {}
+  rpc FindPredecessor(NodeMessage) returns (NodeMessage) {}
+  rpc Notify(NodeMessage) returns (NodeMessage) {}
+  rpc IsAlive(NodeMessage) returns (NodeMessage) {}
+  rpc AddKeyValueToStore(NodeMessage) returns (NodeMessage) {}
+  rpc IsKeyPresentInStore(NodeMessage) returns (NodeMessage) {}
+  rpc GetValueOfKeyInStore(NodeMessage) returns (NodeMessage) {}
+}

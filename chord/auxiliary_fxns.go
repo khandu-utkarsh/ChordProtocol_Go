@@ -9,7 +9,7 @@ import (
 )
 
 type HashId struct {
-	id []byte
+	Id []byte
 }
 
 // !Auxilarry function
@@ -18,7 +18,7 @@ func Generate_Hash(inp []byte) HashId {
 	h.Write(inp)
 	bs := h.Sum(nil)
 
-	hash := HashId{id: bs}
+	hash := HashId{Id: bs}
 	return hash
 }
 
@@ -33,9 +33,9 @@ func GetCurrentProcessPort() string {
 
 // Implement the comparison function
 func IsIdBetweenRange_RightEnd_Inclusive(key HashId, min HashId, max HashId) bool {
-	keyHash := key.id
-	minHash := min.id
-	maxHash := max.id
+	keyHash := key.Id
+	minHash := min.Id
+	maxHash := max.Id
 	firstCond := bytes.Compare(minHash, keyHash) < 0   // -> True if min < key
 	secondCond := bytes.Compare(keyHash, maxHash) <= 0 // -> True if key <= max
 
@@ -46,9 +46,9 @@ func IsIdBetweenRange_RightEnd_Inclusive(key HashId, min HashId, max HashId) boo
 }
 
 func IsIdBetweenRangeRightEndExclusive(key HashId, min HashId, max HashId) bool {
-	keyHash := key.id
-	minHash := min.id
-	maxHash := max.id
+	keyHash := key.Id
+	minHash := min.Id
+	maxHash := max.Id
 
 	firstCond := bytes.Compare(minHash, keyHash) < 0  // -> True if min < key
 	secondCond := bytes.Compare(keyHash, maxHash) < 0 // -> True if key < max
@@ -82,6 +82,13 @@ func PrintBytesSplices(b []byte) {
 func GetHexBasedStringFromBytes(b []byte) string {
 	convertedString := hex.EncodeToString(b)
 	return convertedString
+}
+
+func GetByteArrayFromString(s string) []byte {
+	// TODO : handle error later
+	byteArray, _ := hex.DecodeString(s)
+
+	return byteArray
 }
 
 func GetBigIntFromBytes(b []byte) big.Int {
@@ -128,7 +135,7 @@ func FindNPlus2ToPowerKWholeMod2ToPowerM(n *big.Int, k *big.Int, m *big.Int) big
 
 func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) HashId {
 
-	nInt := GetBigIntFromBytes(n.id)
+	nInt := GetBigIntFromBytes(n.Id)
 	kInt := GetBigIntFromIntegers(indexOfPower)
 	mInt := GetBigIntFromIntegers(m)
 
@@ -137,6 +144,6 @@ func GenerateHashIdForFingerIndex(n HashId, indexOfPower int) HashId {
 	finalByteSplices := outInt.FillBytes(output)
 
 	var retHashId HashId
-	retHashId.id = finalByteSplices
+	retHashId.Id = finalByteSplices
 	return retHashId
 }
