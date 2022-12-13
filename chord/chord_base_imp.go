@@ -169,7 +169,7 @@ func (cn *ChordNode) findSuccessor(key HashId) Node {
 	//!This is the else condition, since if above if is true, this won't be executed
 	n_prime := cn.closestPrecedingNode(key)
 	if GetHexBasedStringFromBytes(n_prime.GetNodeId().Id) == GetHexBasedStringFromBytes(cn.SelfNode.GetNodeId().Id) {
-		return cn.SelfNode
+		return cn.successor
 	}
 
 	return n_prime.RpcFindSuccessor(key)
@@ -181,22 +181,31 @@ func (cn *ChordNode) findSuccessor(key HashId) Node {
 //	3. check_predecessor
 
 func (cn *ChordNode) stabilize() {
+	var predecessorOfSuccessor Node
+	var pred_status bool
+
 	if IsSameNode(cn.SelfNode, cn.successor) {
-		return
+		predecessorOfSuccessor = cn.predecessor
+		pred_status = cn.predecessorStatus
+	} else {
+		predecessorOfSuccessor = cn.successor.RpcFindPredecessor()
+		pred_status = cn.successor.RpcFindPredecessorStatus()
 	}
-
-	predecessorOfSuccessor := cn.successor.RpcFindPredecessor()
-
-	if IsIdBetweenRangeRightEndExclusive(predecessorOfSuccessor.node_id, cn.SelfNode.node_id, cn.successor.node_id) {
-		cn.UpdateSuccessor(predecessorOfSuccessor)
+	if pred_status == true {
+		if IsIdBetweenRangeRightEndExclusive(predecessorOfSuccessor.node_id, cn.SelfNode.node_id, cn.successor.node_id) {
+			cn.UpdateSuccessor(predecessorOfSuccessor)
+		}
 	}
 	//!Notifying it's successor about it
-	cn.successor.RpcNotify(cn.SelfNode) //!This will be a RPC Call
+	if !IsSameNode(cn.successor, cn.SelfNode) {
+		cn.successor.RpcNotify(cn.SelfNode) //!This will be a RPC Call
+	}
 }
 
 func (ch *ChordNode) notify(n_prime Node) {
 	if ch.predecessorStatus == false || IsIdBetweenRangeRightEndExclusive(n_prime.node_id, ch.predecessor.node_id, ch.SelfNode.node_id) == true {
 		ch.predecessor = n_prime
+		ch.predecessorStatus = true
 	}
 }
 
@@ -210,9 +219,7 @@ func (ch *ChordNode) checkPredecessor() {
 }
 
 func (cn *ChordNode) fixFingers() {
-
 	cn.fingerTable.next = cn.fingerTable.next + 1
-
 	if cn.fingerTable.next >= m {
 		cn.fingerTable.next = 0
 	}
@@ -234,9 +241,9 @@ func (cn *ChordNode) fixFingers() {
 // !This will be infinitely running
 func (ch *ChordNode) PerodicallyCheck() {
 	//!Create three timers for stablization, fix fingers and check_predecessor
-	stable_ticker := time.NewTicker(10 * time.Second)
-	check_p_ticker := time.NewTicker(10 * time.Second)
-	fix_f_timer := time.NewTicker(100 * time.Millisecond)
+	stable_ticker := time.NewTicker(2 * time.Second) //!These should be faster than fix_fingers
+	check_p_ticker := time.NewTicker(1 * time.Second)
+	fix_f_timer := time.NewTicker(5 * time.Second)
 
 	for {
 		select {

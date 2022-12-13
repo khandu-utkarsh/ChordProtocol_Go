@@ -32,31 +32,57 @@ func GetCurrentProcessPort() string {
 }
 
 // Implement the comparison function
+// Consider right hand boundary
+// !This fxn is comparing modulo based
 func IsIdBetweenRange_RightEnd_Inclusive(key HashId, min HashId, max HashId) bool {
 	keyHash := key.Id
 	minHash := min.Id
 	maxHash := max.Id
-	firstCond := bytes.Compare(minHash, keyHash) < 0   // -> True if min < key
-	secondCond := bytes.Compare(keyHash, maxHash) <= 0 // -> True if key <= max
 
-	if firstCond && secondCond {
+	bytesCompOut := bytes.Compare(minHash, maxHash)
+	if bytesCompOut == 0 {
 		return true
+	} else if bytesCompOut == -1 { // min < max
+		fc := bytes.Compare(minHash, keyHash) < 0
+		sc := bytes.Compare(keyHash, maxHash) <= 0
+		return fc && sc
+	} else { //min > max
+		//!Inter-changed - Swap
+		t := maxHash
+		maxHash = minHash
+		minHash = t
+
+		//!Complement set conditions
+		fc := bytes.Compare(minHash, keyHash) <= 0
+		sc := bytes.Compare(keyHash, maxHash) < 0
+		return !(fc && sc) //!Returning complement of the reuslt
 	}
-	return false
 }
 
+// !Comparison is modulo based here
 func IsIdBetweenRangeRightEndExclusive(key HashId, min HashId, max HashId) bool {
 	keyHash := key.Id
 	minHash := min.Id
 	maxHash := max.Id
 
-	firstCond := bytes.Compare(minHash, keyHash) < 0  // -> True if min < key
-	secondCond := bytes.Compare(keyHash, maxHash) < 0 // -> True if key < max
+	bytesCompOut := bytes.Compare(minHash, maxHash)
+	if bytesCompOut == 0 {
+		return !(bytes.Compare(minHash, keyHash) == 0) //!Returning complement of the reuslt
+	} else if bytesCompOut == -1 { // min < max
+		fc := bytes.Compare(minHash, keyHash) < 0
+		sc := bytes.Compare(keyHash, maxHash) < 0
+		return fc && sc
+	} else { //min > max
+		//!Inter-changed - Swap
+		t := maxHash
+		maxHash = minHash
+		minHash = t
 
-	if firstCond && secondCond {
-		return true
+		//!Complement set conditions
+		fc := bytes.Compare(minHash, keyHash) <= 0
+		sc := bytes.Compare(keyHash, maxHash) <= 0
+		return !(fc && sc) //!Returning complement of the reuslt
 	}
-	return false
 }
 
 // %Printing functions
