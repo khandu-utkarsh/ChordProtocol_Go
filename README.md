@@ -9,6 +9,10 @@ Whole implementation could be divided into following different parts
 //4. Functionality for join and removing of nodes
 5. Mechanism to test the node crashes and other things using simulation
 6. Implementation of addion of data to one of the machine
+
+#  Testing mechanism -> If we hardcode the hash value as whatever bits we want, and even change m corresponding to it, we should see pretty accurate results. Let's see
+
+
 //7. Crashing the machine used for addition of the data and check if that data can still be fetched or not correctly
 8. Report creation
 
